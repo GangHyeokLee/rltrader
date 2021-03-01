@@ -21,8 +21,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--discount_factor', type=float, default=0.9)
     parser.add_argument('--start_epsilon', type=float, default=0)
-    parser.add_argument('--balance', type=int, default=10000000)
-    parser.add_argument('--num_epoches', type=int, default=100)
+    parser.add_argument('--balance', type=int, default=100000)
+    parser.add_argument('--num_epoches', type=int, default=1000)
     parser.add_argument('--delayed_reward_threshold', 
         type=float, default=0.05)
     parser.add_argument('--backend', 

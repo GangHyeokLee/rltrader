@@ -22,8 +22,8 @@ class Agent:
     NUM_ACTIONS = len(ACTIONS)  # 인공 신경망에서 고려할 출력값의 개수
 
     def __init__(
-        self, environment, min_trading_unit=1, max_trading_unit=2, 
-        delayed_reward_threshold=.05):
+            self, environment, min_trading_unit=1, max_trading_unit=2,
+            delayed_reward_threshold=.05):
         # Environment 객체
         # 현재 주식 가격을 가져오기 위해 환경 참조
         self.environment = environment
@@ -39,7 +39,7 @@ class Agent:
         self.balance = 0  # 현재 현금 잔고
         self.num_stocks = 0  # 보유 주식 수
         # 포트폴리오 가치: balance + num_stocks * {현재 주식 가격}
-        self.portfolio_value = 0 
+        self.portfolio_value = 0
         self.base_portfolio_value = 0  # 직전 학습 시점의 PV
         self.num_buy = 0  # 매수 횟수
         self.num_sell = 0  # 매도 횟수
@@ -75,7 +75,7 @@ class Agent:
         self.ratio_hold = self.num_stocks / int(
             self.portfolio_value / self.environment.get_price())
         self.ratio_portfolio_value = (
-            self.portfolio_value / self.base_portfolio_value
+                self.portfolio_value / self.base_portfolio_value
         )
         return (
             self.ratio_hold,
@@ -120,8 +120,7 @@ class Agent:
     def validate_action(self, action):
         if action == Agent.ACTION_BUY:
             # 적어도 1주를 살 수 있는지 확인
-            if self.balance < self.environment.get_price() * (
-                1 + self.TRADING_CHARGE) * self.min_trading_unit:
+            if self.balance < self.environment.get_price() * (1 + self.TRADING_CHARGE) * self.min_trading_unit:
                 return False
         elif action == Agent.ACTION_SELL:
             # 주식 잔고가 있는지 확인 
@@ -132,11 +131,12 @@ class Agent:
     def decide_trading_unit(self, confidence):
         if np.isnan(confidence):
             return self.min_trading_unit
-        added_traiding = max(min(
-            int(confidence * (self.max_trading_unit - 
-                self.min_trading_unit)),
-            self.max_trading_unit-self.min_trading_unit
-        ), 0)
+        added_traiding = max(
+            min(
+                int(confidence * (self.max_trading_unit - self.min_trading_unit)),
+                self.max_trading_unit - self.min_trading_unit
+            ),
+        0)
         return self.min_trading_unit + added_traiding
 
     def act(self, action, confidence):
@@ -154,22 +154,17 @@ class Agent:
             # 매수할 단위를 판단
             trading_unit = self.decide_trading_unit(confidence)
             balance = (
-                self.balance - curr_price * (1 + self.TRADING_CHARGE) \
-                    * trading_unit
+                    self.balance - curr_price * (1 + self.TRADING_CHARGE) * trading_unit
             )
             # 보유 현금이 모자랄 경우 보유 현금으로 가능한 만큼 최대한 매수
             if balance < 0:
                 trading_unit = max(
-                    min(
-                        int(self.balance / (
-                            curr_price * (1 + self.TRADING_CHARGE))),
-                        self.max_trading_unit
-                    ),
+                    min(int(self.balance / (curr_price * (1 + self.TRADING_CHARGE))),
+                        self.max_trading_unit),
                     self.min_trading_unit
                 )
             # 수수료를 적용하여 총 매수 금액 산정
-            invest_amount = curr_price * (1 + self.TRADING_CHARGE) \
-                * trading_unit
+            invest_amount = curr_price * (1 + self.TRADING_CHARGE) * trading_unit
             if invest_amount > 0:
                 self.balance -= invest_amount  # 보유 현금을 갱신
                 self.num_stocks += trading_unit  # 보유 주식 수를 갱신
@@ -183,8 +178,7 @@ class Agent:
             trading_unit = min(trading_unit, self.num_stocks)
             # 매도
             invest_amount = curr_price * (
-                1 - (self.TRADING_TAX + self.TRADING_CHARGE)) \
-                    * trading_unit
+                    1 - (self.TRADING_TAX + self.TRADING_CHARGE)) * trading_unit
             if invest_amount > 0:
                 self.num_stocks -= trading_unit  # 보유 주식 수를 갱신
                 self.balance += invest_amount  # 보유 현금을 갱신
@@ -195,24 +189,20 @@ class Agent:
             self.num_hold += 1  # 홀딩 횟수 증가
 
         # 포트폴리오 가치 갱신
-        self.portfolio_value = self.balance + curr_price \
-            * self.num_stocks
+        self.portfolio_value = self.balance + curr_price * self.num_stocks
         self.profitloss = (
-            (self.portfolio_value - self.initial_balance) \
-                / self.initial_balance
+                (self.portfolio_value - self.initial_balance) / self.initial_balance
         )
-        
+
         # 즉시 보상 - 수익률
         self.immediate_reward = self.profitloss
 
         # 지연 보상 - 익절, 손절 기준
         delayed_reward = 0
         self.base_profitloss = (
-            (self.portfolio_value - self.base_portfolio_value) \
-                / self.base_portfolio_value
+                (self.portfolio_value - self.base_portfolio_value) / self.base_portfolio_value
         )
-        if self.base_profitloss > self.delayed_reward_threshold or \
-            self.base_profitloss < -self.delayed_reward_threshold:
+        if self.base_profitloss > self.delayed_reward_threshold or self.base_profitloss < -self.delayed_reward_threshold:
             # 목표 수익률 달성하여 기준 포트폴리오 가치 갱신
             # 또는 손실 기준치를 초과하여 기준 포트폴리오 가치 갱신
             self.base_portfolio_value = self.portfolio_value
